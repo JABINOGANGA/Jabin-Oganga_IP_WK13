@@ -1,0 +1,702 @@
+---
+title: "week12 Core-IP"
+author: "Jabin Oganga"
+date: "19/11/2021"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+# **Research Question**
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process. She would now like to employ your services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads. 
+
+
+ 
+
+## **1. Defining the Question**
+
+### **1.1. Specifying the data analytic objective**
+Our main aim is to do thorough exploratory data analysis for univariate and bivariate data and come up with recommendations for our client.
+
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE,eval = FALSE,cache = FALSE)
+```
+
+## ***Loading Data & Libraries***
+```{r}
+install.packages("tidyverse")
+install.packages("ggplot2")
+
+library(tidyverse)
+library(ggplot2)
+
+install.packages("tidyverse")
+library(tidyverse)
+
+install.packages("ggplot2")
+library(ggplot2)
+
+install.packages("caret")
+library(caret)
+
+install.packages("caretEnsemble")
+library(caretEnsemble)
+
+install.packages("factoextra")
+library(factoextra)
+
+install.packages("class")
+library(class)
+
+install.packages("FactoMineR")
+library(FactoMineR)
+
+install.packages('psych')
+library(psych)
+
+install.packages('Amelia')
+library(Amelia)
+
+install.packages('mice')
+library(mice)
+
+install.packages('GGally')
+library(GGally)
+
+install.packages('rpart')
+library(rpart)
+
+install.packages('randomForest')
+library(randomForest)
+
+install.packages("dplyr")
+library(dplyr)
+```
+```{r}
+ads = read.csv('http://bit.ly/IPAdvertisingData')
+View(ads)
+```
+
+
+## ***Checking the data**
+```{r}
+lapply(ads,class)
+```
+#### ***The dataset has 10 columns and 1000 rows with 4 columns with characters and the rest in numerical***
+## ***3. Tidying the data***
+###  ***Checking for null values***
+```{r}
+sum(is.na(ads))
+```
+
+```{r}
+colSums(is.na(ads))
+```
+###  ***Checking for duplicates in the dataset***
+```{r}
+sum(duplicated(ads))
+```
+
+###  ***Checking for anomalies and outliers on numerical columns***
+```{r}
+boxplot(ads$`Age`,main="Age Boxplot",col = "orange")
+```
+
+
+
+
+```{r}
+boxplot(ads$`Daily.Time.Spent.on.Site`,main=" Daily.Time.Spent.on.Site on a Boxplot",col = "blue")
+```
+
+```{r}
+boxplot(ads$`Area.Income`,main=" Area.Income on a Boxplot",col = "Cyan")
+```
+#### ***The data had no null values or duplicates, the only column with outliers was the income column which implies that there is a likely chance that the data when plotted will have an odd distribution***
+
+## ***Univariate Analysis***
+### ***Measures of central Tendency***
+#### ***Mean***
+
+```{r}
+time <- mean(ads $ Daily.Time.Spent.on.Site)
+print("The mean Time spent is:")
+print(time)
+```
+
+```{r}
+datas <- mean(ads $ Daily.Internet.Usage)
+print("The mean Daily Internet Usage is:")
+print(datas)
+```
+
+```{r}
+miaka <- mean(ads $ Age)
+print("Mean Age:")
+print(miaka)
+
+```
+```{r}
+earning <- mean(ads $ Area.Income)
+print("Mean Income:")
+print(earning)
+```
+#### ***Mode***
+```{r}
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+```
+
+```{r}
+cat("The mode for income is",getmode(ads$Area.Income))
+cat("\n")
+cat("The mode for daily time spent on site is",getmode(ads$Daily.Time.Spent.on.Site))
+cat("\n")
+cat("The mode for gender is",getmode(ads$Male))
+cat("\n")
+cat("The mode for age is",getmode(ads$Age))
+cat("\n")
+cat("The mode for Clicked on Ad",getmode(ads$Clicked.on.Ad))
+
+```
+
+#### ***Median***
+```{r}
+cat("The median for age is",median(ads$Age))
+cat("\n")
+cat("The median for Area.Income is",median(ads$Area.Income))
+cat("\n")
+cat("The median for daily Internet Usage is",median(ads$Daily.Internet.Usage))
+cat("\n")
+
+
+```
+#### ***Standard Deviation***
+```{r}
+cat("The standard deviation for age is",sd(ads$`Age`))
+cat("\n")
+cat("The standard deviation for Area.Income is",sd(ads$`Area.Income`))
+cat("\n")
+cat("The standard deviation for daily Internet Usage is",sd(ads$`Daily.Internet.Usage`))
+cat("\n")
+
+```
+#### ***Variance***
+```{r}
+cat("The variance for age is",var(ads$`Age`))
+cat("\n")
+cat("The variance for Area.Income is",var(ads$`Area.Income`))
+cat("\n")
+cat("The variance for daily Internet Usage is",var(ads$`Daily.Internet.Usage`))
+cat("\n")
+
+
+```
+### ***Measures of Dispersion***
+#### ***Range***
+```{r}
+cat('The Age range is', range(ads$Age))
+cat('\n')
+cat('The Daily.Internet.Usage range', range(ads$Daily.Internet.Usage))
+cat('\n')
+cat('The Area.Income range', range(ads$Area.Income))
+cat('\n')
+
+```
+#### ***4.1.1. Quantile Range***
+```{r}
+cat("The Quantile for age is",quantile(ads$`Age`))
+cat("\n")
+cat("The Quantile for Area.Income is",quantile(ads$`Area.Income`))
+cat("\n")
+cat("The Quantile for daily Internet Usage is",quantile(ads$`Daily.Internet.Usage`))
+
+```
+
+```{r}
+
+```
+#### ***Summaries of the DataSet***
+```{r}
+summary(ads $ Age)
+```
+
+```{r}
+summary(ads $ Area.Income)
+```
+
+
+```{r}
+summary(ads $ Daily.Internet.Usage )
+```
+#### ***plots (Univariate)***
+```{r}
+library(ggplot2)
+ggplot(ads, aes(Age)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'Age distribution', x = 'Age', y = 'Frequency')
+```
+
+```{r}
+ggplot(ads, aes(`Daily.Internet.Usage`)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'Daily internet usage distribution', x = 'Daily internet usage', y = 'Frequency')
+```
+
+```{r}
+ggplot(ads, aes(`Area.Income`)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'Area.Income distribution', x = 'Area.Income', y = 'Frequency')
+```
+#### ***plots (Bivariate)***
+```{r}
+ggplot(ads, aes(x = Age, y = `Daily.Time.Spent.on.Site`, colour = Male )) +
+  geom_point() + labs(title = 'Scatter plot for age vs daily time spent on site')
+
+```
+```{r}
+ggplot(ads, aes(x = Age, y = `Area.Income`, colour = Male)) +
+  geom_point() + labs(title = 'Scatter plot for age vs daily time spent on site')
+```
+
+
+```{r}
+ads %>% group_by(Country, `Daily.Internet.Usage`)%>% head(10)%>% arrange(desc(`Daily.Internet.Usage`))
+```
+#### ***The countries with the most internet utility are Tunisia, Italy, San Marino, Norway, and Iceland***
+```{r}
+ads %>% group_by(Country, `Daily.Time.Spent.on.Site`)%>% head(10)%>% arrange(desc(`Daily.Time.Spent.on.Site`))
+```
+### ***The Countries that have the most access to the site are Mynmar, Nauru, Grenada, Italy and Ghana***
+
+## ***Conclusions***
+
+
+The countries with the most internet utility are Tunisia, Italy, San Marino, Norway, and Iceland which are developed countries with proper internet connnection and stable electricity.
+
+The Countries that have the most access to the site are Mynmar, Nauru, Grenada, Italy and Ghana which is a mixture between developed nation and third world countries.
+
+The survey also indicates that the major agegrouos interested with the cryptocurrency trade are people within the age of late 20s and early 50s 
+
+Interested parties seem to be earning from the range of 40,000 to 80,000.
+
+There was no disparity in regards to which gender visists the site more often.
+
+## ***Recommendations***
+The client should consider more consumer targeted marketing. The advertisements should be relevant to a working population looking to invest to make more than what they earn.
+
+The advertisements should be curated to relate to the cultural structure of the top viewers of the adverts them more relatable
+
+To get more clicks the client needs to diversify the marketing strategies and use more online platforms especially in countries with more internet usage but less access to the site to triggering the consumer's attention to the site. 
+# ***Supervised learning***
+## ***Loading the libraries for the Supervised learning*** 
+```{r}
+
+library(tidyverse)
+
+
+library(ggplot2)
+
+
+library(caret)
+
+
+library(caretEnsemble)
+
+
+library(factoextra)
+
+
+library(class)
+
+
+library(FactoMineR)
+
+
+library(psych)
+
+
+library(Amelia)
+
+
+library(mice)
+
+
+library(GGally)
+
+
+library(rpart)
+
+
+library(randomForest)
+
+
+library(dplyr)
+
+```
+## ***Supervised Learning with KNN***
+```{r}
+# Confirming the dataset 
+head(ads)
+```
+
+#### ***Checking the number of unique values in each column to determine the ones that can be used in identifying various patterns and relationships in the dataset ***
+
+```{r}
+length(unique(ads$Ad.Topic.Line))
+length(unique(ads$City))
+length(unique(ads$Country))
+length(unique(ads$Timestamp))
+length(unique(ads$Daily.Internet.Usage))
+```
+
+
+```{r}
+# Getting rid of columns with values that cannot be scaled to fit the model and lack the right features for prediction
+ads_new = subset(ads, select = -c(Ad.Topic.Line,Timestamp,Country,City) )
+ads_new
+```
+
+```{r}
+#Checking the number of remaining columns 
+ncol(ads_new)
+```
+
+```{r}
+# Changing the format of the table into factors for it fit the classification modelling appropriately
+ads_new$Clicked.on.Ad <- as.factor(ads_new$Clicked.on.Ad)
+
+```
+
+```{r}
+# Checking to confirm the data structures on the columns if the conversion underwent successfuly
+str(ads_new)
+```
+
+
+
+
+
+```{r}
+#ads_news <- scale(ads_new)
+#head(ads_news)
+
+set.seed(400)
+
+
+
+
+# The normalization function is created
+nor <- function(x){ (x - min(x))/ (max(x)- min(x))}
+
+# Normalizing the colums by standardizing the values using the normalizing function
+
+ads_new$Daily.Time.Spent.on.Site<- normalize(ads_new$Daily.Time.Spent.on.Site)
+
+ads_new$Age<- normalize(ads_new$Age)
+
+ads_new$Area.Income<- normalize(ads_new$Area.Income)
+
+ads_new$Male<- normalize(ads_new$Male)
+
+#ads_new$	Country<- normalize(ads_new$	Country)
+
+ads_new$Daily.Internet.Usage<- normalize(ads_new$Daily.Internet.Usage)
+
+#ads_news <- as.data.frame(lapply(ads_new[1,2,3], nor))
+
+```
+
+```{r}
+# Splitting the dataset to train and test samples
+train_ads <- ads_new[1:750,-6]
+test_ads <- ads_new[751:1000,-6]
+train_ad <- ads_new[1:750,6]
+test_ad <- ads_new[751:1000,6]
+```
+
+
+
+
+
+```{r}
+# Instantiating the model and fitting it onto our dataset
+library(class)
+require(class)
+
+model_ads <- knn(train = train_ads, test = test_ads,cl = train_ad,k = 13)
+table(factor(model_ads))
+table(test_ad, model_ads)
+
+```
+#### ***The model predicted 121 values as 0 and 129 as one 110 were correctly predicted as o and 128 correctly predicted as 1 which was a good number out of the total***
+
+```{r}
+# Running the knn function 
+pred_ad <- knn(train_ads,test_ads, cl = train_ad, k=13)
+pred_ad
+
+```
+
+```{r}
+pred_ads <- table(pred_ad, test_ad)
+pred_ads
+```
+
+```{r}
+# Checking the accuracy
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(pred_ads)
+```
+#### ***The accuracy was 95.2% which was a good turn out***
+
+### ***Optimizing our KNN Model***
+```{r}
+# Instantiating k folds to use it in optimizing the model to improve it perfomance by ensuring it uses the right parameters
+
+library(tidyverse)
+
+
+library(ggplot2)
+
+
+library(caret)
+
+
+library(caretEnsemble)
+
+
+library(factoextra)
+
+
+library(class)
+
+
+library(FactoMineR)
+
+
+library(psych)
+
+
+library(Amelia)
+
+
+library(mice)
+
+
+library(GGally)
+
+
+library(rpart)
+
+
+library(randomForest)
+
+
+library(dplyr)
+cross_ad <- trainControl(method = "cv", number = 5)
+
+model_ad <- train(Clicked.on.Ad ~ ., data = ads_new, method = "knn", trControl = cross_ad)
+
+model_ad
+
+```
+
+```{r}
+# Instantiating the model tuned to fit the right parameters
+best_model <- model_ad$best.model
+```
+
+```{r}
+test_ad
+```
+```{r}
+pred_ad
+```
+
+
+```{r}
+pred_ad3 <- knn(train_ads,test_ads, cl = train_ad, k=9)
+```
+
+
+
+```{r}
+# Fitting the model onto our test dataset
+pred_ad2 <- predict(model_ad, test_ads)
+
+pred_ad
+```
+
+
+```{r}
+
+# Using confusion matrix to get a table with the full outcome of the prediction
+# conf_ad <- confusionMatrix(pred_ad, test_ad)
+# conf_ad
+
+pred_ads2 <- table(pred_ad2, test_ad)
+pred_ads2
+
+accuracy(pred_ads2)
+
+```
+```{r}
+pred_ads3 <- table(pred_ad3, test_ad)
+pred_ads3
+
+
+
+accuracy(pred_ads3)
+```
+### ***The tuning might have optimization reduced the accuracy of the model these implies that there is need to figure out the other hyperparameters that need tuning in order to ensure that the model achieves optimum accuracy levels***
+
+
+## ***Supervised Learning SVM***
+```{r}
+# Selecting the columns to use for SVM
+ads_svm = subset(ads, select = -c(Ad.Topic.Line,Timestamp,Country,City) )
+head(ads_svm)
+```
+
+
+
+```{r}
+# Creating partitions to split the data set into training and test samples
+svm_train_ads <- createDataPartition(y = ads_svm$Clicked.on.Ad, p = 0.75, list = TRUE)
+training_ads <- ads_svm[intrain,]
+testing_ads <- ads_svm[-intrain,]
+```
+
+
+```{r}
+# Creating the appropriate dimentional sizes for the model
+dim(training_ads);
+dim(testing_ads);
+```
+
+
+```{r}
+
+# Checking for null values that may interfere with the models accuracy and functioning
+anyNA(ads_svm)
+
+
+
+
+```
+
+```{r}
+# Checking for the numerical summary of the data in the svm training samples
+summary(training_ads)
+```
+
+
+
+```{r}
+# Changing the format into factors to make the dataset convinient for classification 
+training_ads$Clicked.on.Ad <- as.factor(training_ads$Clicked.on.Ad )
+```
+
+### ***Optimization of the SVM model***
+```{r}
+
+svm_trctrl <- trainControl (method = "cv", number = 10)
+
+svm_Linear_ads <- train(Clicked.on.Ad ~ ., data = training_ads, method = "svmLinear", trControl = svm_trctrl, preProcess = c("center", "scale"),tuneLength = 10)
+```
+
+
+```{r}
+svm_Linear_ads
+```
+
+
+```{r}
+# Running the model
+test_pred_svm <- predict(svm_Linear_ads, newdata = testing_ads)
+test_pred_svm
+```
+
+
+```{r}
+# Using confusion matrix to get a detailed report of the outcome 
+conf_svm <- confusionMatrix(table(test_pred_svm, testing_ads$Clicked.on.Ad))
+conf_svm
+```
+#### ***The SVM got us to an accuracy of 96% which is an improvement from 95 by the KNN THe SVM was run after optimizing it's parameters to ensure we get the best accurate results it could give***
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
