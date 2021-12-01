@@ -1,0 +1,690 @@
+---
+title: "IP WK13"
+author: "Jabin Oganga"
+Date: "28th November 2021"
+output: 
+        html_notebook
+        word_document: default
+# **Research Question**
+Kira Plastinina (Links to an external site.) is a Russian brand that is sold through a defunct chain of retail stores in Russia, Ukraine, Kazakhstan, Belarus, China, Philippines, and Armenia. The brand’s Sales and Marketing team would like to understand their customer’s behavior from data that they have collected over the past year. More specifically, they would like to learn the characteristics of customer groups.
+
+Perform clustering stating insights drawn from your analysis and visualizations.
+Upon implementation, provide comparisons between the approaches learned this week i.e. K-Means clustering vs Hierarchical clustering highlighting the strengths and limitations of each approach in the context of your analysis. 
+Your findings should help inform the team in formulating the marketing and sales strategies of the brand. 
+
+You will create a Markdown which will comprise the following sections.  employ your services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads.
+---
+```{r}
+knitr::opts_chunk$set(echo = TRUE,eval = FALSE,cache = FALSE)
+```
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+## ***1. Data Sourcing***
+## ***Loading Data & Libraries***
+
+```{r}
+#install.packages("tidyverse")
+library(tidyverse)
+
+#install.packages("ggplot2")
+library(ggplot2)
+
+#install.packages("caret")
+library(caret)
+
+#install.packages("caretEnsemble")
+library(caretEnsemble)
+
+#install.packages("factoextra")
+library(factoextra)
+
+#install.packages("class")
+library(class)
+
+#install.packages("FactoMineR")
+library(FactoMineR)
+
+#install.packages('psych')
+library(psych)
+
+#install.packages('Amelia')
+library(Amelia)
+
+#install.packages('mice')
+library(mice)
+
+#install.packages('GGally')
+library(GGally)
+
+#install.packages('rpart')
+library(rpart)
+
+#install.packages('randomForest')
+library(randomForest)
+
+#install.packages("dplyr")
+library(dplyr)
+
+
+
+```
+
+## ***Loading Datasets***
+```{r}
+ads = read.csv('http://bit.ly/IPAdvertisingData')
+View(ads)
+```
+
+```{r}
+
+kira = read.csv('http://bit.ly/EcommerceCustomersDataset')
+View(kira)
+
+```
+
+## 2. ***Checking Data***
+## ***Checking the data**
+
+```{r}
+# Checking the number of columns and rows in the entire dataset
+rows <- nrow(kira)
+cols <- ncol(kira)
+cha1 <- "The No. of Rows is"
+cha2 <-  "& The No. of Columns is" 
+
+cat(cha1, rows, cha2, cols)
+```
+
+```{r}
+# Checking the format types of various data imputed in various columns of the dataset
+str(kira)
+```
+
+```{r}
+#length((unique(kira[1:18],)))
+#length(lapply(kira[1:18],unique))
+# Checking for the various unique values in each column of the data
+for (i in kira[1:18]){
+  values <- length(unique(i))
+  print(values)
+  
+}
+```
+
+
+
+
+```{r}
+# Checking the various column names alongside the datatypes of each columns
+lapply (kira, class)
+```
+
+
+```{r}
+#Checking the number of null values inside the dataset
+null <- sum(is.na(kira))
+null
+
+```
+
+
+```{r}
+# Checking the the number of null values in each columns
+colSums(is.na(kira))
+colSums
+```
+
+
+```{r}
+# Checking the number of duplicated in the entire dataset
+sum(duplicated(kira))
+```
+```{r}
+
+class(kira$Administrative_Duration)
+```
+
+
+
+
+
+#### ***Using a boxplots to detect anomalies through each column of the datasets***
+
+
+```{r}
+for (i in kira[1:18]){
+  if (class(i) == "numeric"){
+    #x <- plots[, i]
+    boxplot(i,main = paste("BoxPlot"), col= "orange")}
+  
+  if (class(i) == "integer"){
+    #x <- plots[, i]
+    boxplot(i,main = paste("BoxPlot"), col= "cyan")}
+  
+  
+  else {
+    print("No plot")
+  }
+  
+}
+#boxplot(ads$`Age`,main="Age Boxplot",col = "orange")
+```
+
+
+
+
+```{r}
+
+str(kira$Administrative)
+class(kira$Administrative)
+```
+
+
+
+
+## ***4. Performing Data Cleaning***
+
+```{r}
+# Removing the null values in the dataset as they fall below 10% of the entire rows in the dataset
+kira <- na.omit(kira)
+sum(is.na(kira))
+```
+
+
+```{r}
+# Removing the duplicates on the dataset
+kira <- kira[!duplicated(kira),]
+sum(duplicated(kira))
+```
+
+
+```{r}
+```
+
+## ***5. Perform Exploratory Data Analysis  (Univariate, Bivariate & Multivariate)***
+### ***Measures of central Tendencies and dispersion within the dataset***
+```{r}
+# Using a for loop to calculate the summary of each column in the dataset
+for (i in kira[1:18]){
+
+  if (class(i) == "integer"){
+    x <- summary(i)
+    y <- colnames(kira)[i=+1]
+    y =+ 1
+    cat("\n")
+    print(y)
+  
+    print(x)
+    cat("\n")
+  }
+  else if (class(i) == "numeric"){
+    x <- summary(i)
+    cat("\n")
+    
+    print(x)
+    cat("\n")
+    }
+  
+  else if (class(i) == "character"){
+    cat("\n")
+    
+    print("Characters cannot be calculated")
+    cat("\n")
+    }
+  
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### ***Univariate II***
+```{r}
+# Checking the data distribution in various columns
+library(ggplot2)
+ggplot(kira, aes(Informational_Duration)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'Informational_Duration', x = 'Informational_Duration', y = 'Frequency')
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(kira, aes(Administrative_Duration)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'Administrative_Duration', x = 'Administrative_Duration', y = 'Frequency')
+```
+
+
+```{r}
+ggplot(kira, aes(ProductRelated_Duration)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'ProductRelated_Duration', x = 'ProductRelated_Duration', y = 'Frequency')
+
+```
+
+
+```{r}
+ggplot(kira, aes(PageValues)) + geom_histogram(bins = 20, color = 'cyan') + 
+    labs(title = 'PageValues)', x = 'PageValues)', y = 'Frequency')
+```
+
+
+
+## Bivariate & Univariate Analysis
+```{r}
+ggplot(kira, aes(x = `BounceRates`, y = `ExitRates`, colour = Region )) +
+  geom_point() + labs(title = 'Scatter plot for BounceRates vs ExitRates')
+```
+
+
+```{r}
+ggplot(kira, aes(x = `Browser`, y = `TrafficType`, colour = Region )) +
+  geom_point() + labs(title = 'Scatter plot for Browser vs TrafficType')
+
+```
+```{r}
+library(ggplot2)
+ggplot(kira, aes(x = `BounceRates`, y = `ExitRates`, colour = Region, size = TrafficType )) +
+  geom_point() + labs(title = 'Scatter plot for BounceRates vs ExitRates')
+```
+
+
+```{r}
+ggplot(kira, aes(x = `Administrative_Duration`, y = `Informational_Duration`, colour = Region, size = OperatingSystems )) +
+  geom_point() + labs(title = 'Scatter plot for Browser vs TrafficType')
+
+```
+
+
+```{r}
+kira.new <- kira[, c(1:10,12,13,14,15)]
+summary(kira.new)
+
+
+
+```
+
+- People visit the site mostly to to search for the products then for administrative purposes then lastly  to gather information on the about the services offered.
+
+- The Bounce rate which shows the level of accessing the site then leaving immediately is slightly lower than the exot rate which implies that a good number of those who visit the site find it useful but it can be made better
+
+- The turnout on special days is not as predictable or related to the level of access
+
+- The access of the site is mostly accessed by 2 operating systems which implies that it is conversant with various operating systems 
+
+
+
+
+```{r}
+library(psych)
+cor(kira.k)
+```
+ 
+
+
+```{r}
+# Install if needed by removing the #
+# install.packages("tidyverse")
+install.packages("readxl")
+# install.packages("FactoMineR")
+# install.packages("factoextra")
+# Load Libraries
+library(tidyverse)
+library(readxl)
+library(FactoMineR)
+library(factoextra)
+```
+
+## ***6. Implement Solution***
+## ***KMeans Clustering***
+```{r}
+# Set Seed
+set.seed(1000)
+```
+
+
+```{r}
+# Cluster Analysis - kmeans
+kmeans_basic <- kmeans(kira[1:4], centers = 5)
+kmeans_basic_table <- data.frame(kmeans_basic$size, kmeans_basic$centers)
+kmeans_basic_df <- data.frame(Cluster = kmeans_basic$cluster, kira.new)
+# head of df
+head(kmeans_basic_df)
+```
+
+
+```{r}
+# Sekecting the columns to use on Kmeans clustering
+kira.k <- kira[,c(1:10,12,13,14,15)]
+summary(kira.k)
+```
+
+
+```{r}
+
+# Normalizing the colums by standardizing the values using the normalizing function
+
+
+normalize <- function(x){
+  return ((x-min(x)) / (max(x)-min(x)))
+}
+
+kira.k$Administrative <- normalize(kira$Administrative)
+kira.k$Administrative_Duration <- normalize(kira$Administrative_Duration)
+kira.k$Infornational <- normalize(kira$Informational)
+kira.k$Informational_Duration <- normalize(kira$Informational_Duration)
+kira.k$ProductRelated <- normalize(kira$ProductRelated)
+kira.k$ProductRelated_Duration <- normalize(kira$ProductRelated_Duration)
+kira.k$BounceRates <- normalize(kira$BounceRates)
+kira.k$ExitRates <- normalize(kira$ExitRates)
+kira.k$PageValues <- normalize(kira$PageValues)
+kira.k$SpecialDay <- normalize(kira$SpecialDay)
+kira.k$OperatingSystems <- normalize(kira$OperatingSystems)
+kira.k$Browser <- normalize(kira$Browser)
+kira.k$Region <- normalize(kira$Region)
+kira.k$TrafficType <- normalize(kira$TrafficType)
+
+
+```
+
+
+```{r}
+# Checking the data selected
+head(kira.k)
+```
+
+
+```{r}
+# Running the model & checking the clusters created
+result <- kmeans(kira.k, 3)
+
+result$size
+```
+
+
+```{r}
+# Watching the cluster centres selected by the model
+result$centers
+```
+
+
+
+```{r}
+# Cluster number for each of the observations
+
+result$cluster
+```
+```{r}
+
+```
+
+
+```{r}
+fviz_nbclust(scale(kira.k),kmeans,nstart = 100, method = "wss") +
+  geom_vline(xintercept = 5, linetype = 1)
+```
+
+
+```{r}
+kmeans_fancy <- kmeans(scale(kira.k),5,nstart = 100)
+
+
+fviz_cluster(kmeans_fancy, data = scale(kira.k), geom = c("point"),ellipse.type = "euclid")
+```
+## ***7. Challenge the Solution***
+
+```{r}
+
+# Normalizing the colums by standardizing the values using the normalizing function
+
+normalize <- function(x){
+  return ((x-min(x)) / (max(x)-min(x)))
+}
+
+kira.k$Administrative <- normalize(kira$Administrative)
+kira.k$Administrative_Duration <- normalize(kira$Administrative_Duration)
+kira.k$Infornational <- normalize(kira$Informational)
+kira.k$Informational_Duration <- normalize(kira$Informational_Duration)
+kira.k$ProductRelated <- normalize(kira$ProductRelated)
+kira.k$ProductRelated_Duration <- normalize(kira$ProductRelated_Duration)
+kira.k$BounceRates <- normalize(kira$BounceRates)
+kira.k$ExitRates <- normalize(kira$ExitRates)
+kira.k$PageValues <- normalize(kira$PageValues)
+kira.k$SpecialDay <- normalize(kira$SpecialDay)
+kira.k$OperatingSystems <- normalize(kira$OperatingSystems)
+kira.k$Browser <- normalize(kira$Browser)
+kira.k$Region <- normalize(kira$Region)
+kira.k$TrafficType <- normalize(kira$TrafficType)
+
+
+```
+
+
+
+```{r}
+# After preprocessing the data we build a distance matrix 
+# The run the model on the preprocessed data
+
+d <- dist(kira.k, method = "euclidean" )
+
+res.hc <- hclust(d, method = "ward.D2")
+```
+
+
+```{r}
+# ThE PLOT SHOWING THE RELATIONSHIP VISAULLY THE DENDOGRAM
+plot(res.hc, cex = 0.00005, hang = -100)
+```
+
+```{r}
+# We then deploy the use of albine() to draw a line that superimposes rectangular compartments foer each cluster of the tree
+plot(res.hc)
+rect.hclust(res.hc , k = 3, border = 2:6)
+abline(h = 3, col = 'red')
+```
+
+
+```{r}
+install.packages("dendextend")
+library(dendextend)
+
+
+```
+
+
+```{r}
+avg <- as.dendrogram(res.hc)
+
+avg.k <- color_branches(avg, h = 3)
+
+plot(avg.k)
+```
+```{r}
+cut.avg <- cutree(res.hc, k= 3)
+```
+
+```{r}
+library(dplyr)
+kira.df.cl <- mutate(kira.k, cluster = cut.avg)
+count(kira.df.cl)
+```
+
+### ***Evaluation***
+```{r}
+# We then evaluate the trend between two features which shows a linear relationship between the Exit rates and the Bounce rates
+
+library(ggplot2)
+ggplot(kira.df.cl, aes(x = BounceRates, y = ExitRates, color = factor(cluster)))+
+  geom_point()
+```
+
+
+```{r}
+
+table(kira.df.cl$cluster,kira.k$Administrative)
+```
+
+
+```{r}
+kira.sl <- eclust(kira.k, "hclust", k = 3, method = "complete" , graph = FALSE)
+```
+
+## 8. Follow up Questions
+```{r}
+kira.sl
+```
+### ***Conclusion***
+The stability of K means a random step innitialization that may yield different results on a rerun unlike Heiracgial clustering
+
+K-means is less computationally expensive than hierarchical clustering as the clustering procedure on H clustering took a longer duration and computational resource to run compared to Kmeans 
+
+
+### ***Recommendation***
+
+- The company needs to improve the interface to allowincrease the exit rate and reduce the bounce rates
+
+- The marketing department needs to work on a plan to promote the company as those accessing the site to learn more about it are quite few which implies that there is a  mminimal amount of referalls 
+
+- Heirachal Clustering produced the better result compared to KMeans 
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
